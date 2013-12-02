@@ -3,7 +3,8 @@
 
 # Use this to prepare data on Ajustes Diretos (non-bid contracts) from the
 # Portuguese government for import into Open Spending. The data is provided in
-# JSON by http://www.base.gov.pt and processed into a CSV.
+# a file with one JSON document per line and processed into a CSV.
+# Source of the data: http://www.base.gov.pt
 
 # Usage: $ python process-ajustes.py [file-name]
 
@@ -11,6 +12,7 @@ import csv
 import json
 import sys
 import os
+import fileinput
 from datetime import datetime
 
 # Check if the file-name is passed as an argument
@@ -22,11 +24,8 @@ else:
     print 'Please provide the name of the file that should be processed. Eg. $ python process-ajustes.py [data_file]'
     exit (1)
 
-# Try to open the JSON containing the data.
-try:
-	with open(file_in) as file:
-		data = json.load(file)
-except IOError:
+# Check if there is a JSON with that name
+if os.path.isfile(file_in) == False:
 	print 'Oh my, something went wrong. Are you sure there is a file called \'' + file_in + '\'?'
 	exit(1)
 
@@ -42,7 +41,9 @@ with open(file_out, "w") as file:
 	csv_file.writerow(['signing_date', 'description', 'amount', 'execution_deadline', 'exection_place', 'publication_date', 'id', 'cpvs_id', 'cpvs_description', 'contract_types', 'object_description', 'contract_fundamentation', 'direct_award_fundamentation', 'contracted_id', 'contracted_nif', 'contracted_name', 'contracting_id', 'contracting_nif', 'contracting_name', 'observations', 'close_date', 'cause_deadline_change', 'total_price', 'cause_price_change'])
 	
 	# Loop over each of the contracts
-	for item in data:
+	for line in fileinput.input(file_in):
+
+		item = json.loads(line)
 
 		# Clean up the currency field: 1) remove thousand seperator; 2) remove
 		# the currency; and 3) substitute decimal mark ',' for '.'
@@ -114,3 +115,5 @@ with open(file_out, "w") as file:
 
 		# Write everything to the CSV file in the right order
 		csv_file.writerow([item['signingDate'], item['description'], item['initialContractualPrice'], item['executionDeadline'], item['executionPlace'], item['publicationDate'], item['id'], cpvs_id, cpvs_description, item['contractTypes'], item['objectBriefDescription'], item['contractFundamentationType'], item['directAwardFundamentationType'], contracted_id, contracted_nif, contracted_name, contracting_id, contracting_nif, contracting_name, item['observations'], item['closeDate'], item['causesDeadlineChange'], item['totalEffectivePrice'], item['causesPriceChange']])
+
+	print 'Data was written to ' + file_out + '.'
