@@ -43,8 +43,11 @@ with open(file_out, "w") as file:
 	# Loop over each of the contracts
 	for line in fileinput.input(file_in):
 
-		item = json.loads(line)
-
+		try:
+			item = json.loads(line)
+		except ValueError as ex:
+			continue
+		
 		# Clean up the currency field: 1) remove thousand seperator; 2) remove
 		# the currency; and 3) substitute decimal mark ',' for '.'
 		list_prices = ['initialContractualPrice', 'totalEffectivePrice']
@@ -61,15 +64,22 @@ with open(file_out, "w") as file:
 				item[date] = datetime.strptime(item[date], '%d-%m-%Y').date()
 
 		# Split the CPV code from its description
-		cpvs_id = item['cpvs'].split(',', 1)[0].strip()
-		cpvs_description = item['cpvs'].split(',', 1)[1].strip().encode('utf-8')
-
+		# Failsafe
+		cpvs_id = ''
+		cpvs_description = ''
+		try:
+			cpvs_pieces = item['cpvs'].split(',', 1)
+			cpvs_id = cpvs_pieces[0].strip()
+			cpvs_description = cpvs_pieces[1].strip().encode('utf-8')
+		except:
+			pass
+			
 		# Encode the texts
 		list_longtexts = ['description', 'executionDeadline', 'observations', 'contractTypes', 'objectBriefDescription', 'contractFundamentationType', 'directAwardFundamentationType', 'causesDeadlineChange', 'causesPriceChange']
 
 		for longtext in list_longtexts:
 			if item[longtext]:
-				item[longtext] = item[longtext].encode('utf-8')
+				item[longtext] = item[longtext].encode('utf-8').replace("\xa0", " ")
 
 		# Multiple locations are split with '<BR/>' substitute these for ' | '
 		item['executionPlace'] = item['executionPlace'].encode('utf-8').replace('<BR/>', ' | ')
@@ -79,39 +89,38 @@ with open(file_out, "w") as file:
 		# unique entity.
 		# Process the contracted entities
 
-		if len(item['contracted']) > 1:
-			list_nif = []
-			list_id = []
-			list_name = []
-			for contracted in item['contracted']:
-				list_nif.append(contracted['nif'])
-				list_id.append(str(contracted['id']))
-				list_name.append(contracted['description'].encode('utf-8'))
-			contracted_nif = ' | '.join(list_nif)
-			contracted_id = ' | '.join(list_id)
-			contracted_name = ' | '.join(list_name)
-		else:
-			contracted_nif = item['contracted'][0]['nif']
-			contracted_id = item['contracted'][0]['id']
-			contracted_name = item['contracted'][0]['description'].encode('utf-8')
+		list_nif = []
+		list_id = []
+		list_name = []
+		for contracted in item['contracted']:
+			
+			if isinstance(contracted['nif'], int) :
+				list_nif.append(str(contracted['nif']))
+			else :
+				list_nif.append(contracted['nif'].encode('utf-8'))
+				
+			list_id.append(str(contracted['id']))
+			list_name.append(contracted['description'].encode('utf-8'))
+		contracted_nif = ' | '.join(list_nif)
+		contracted_id = ' | '.join(list_id)
+		contracted_name = ' | '.join(list_name)
 
 		#Process the contracting entities
-		
-		if len(item['contracting']) > 1:
-			list_nif = []
-			list_id = []
-			list_name = []
-			for contracting in item['contracting']:
-				list_nif.append(contracting['nif'])
-				list_id.append(str(contracting['id']))
-				list_name.append(contracting['description'].encode('utf-8'))
-			contracting_nif = ' | '.join(list_nif)
-			contracting_id = ' | '.join(list_id)
-			contracting_name = ' | '.join(list_name)
-		else:
-			contracting_nif = item['contracting'][0]['nif']
-			contracting_id = item['contracting'][0]['id']
-			contracting_name = item['contracting'][0]['description'].encode('utf-8')
+		list_nif = []
+		list_id = []
+		list_name = []
+		for contracting in item['contracting']:
+			
+			if isinstance(contracting['nif'], int) :
+				list_nif.append(str(contracting['nif']))
+			else :
+				list_nif.append(contracting['nif'].encode('utf-8'))
+			
+			list_id.append(str(contracting['id']))
+			list_name.append(contracting['description'].encode('utf-8'))
+		contracting_nif = ' | '.join(list_nif)
+		contracting_id = ' | '.join(list_id)
+		contracting_name = ' | '.join(list_name)
 
 		# Write everything to the CSV file in the right order
 		csv_file.writerow([item['signingDate'], item['description'], item['initialContractualPrice'], item['executionDeadline'], item['executionPlace'], item['publicationDate'], item['id'], cpvs_id, cpvs_description, item['contractTypes'], item['objectBriefDescription'], item['contractFundamentationType'], item['directAwardFundamentationType'], contracted_id, contracted_nif, contracted_name, contracting_id, contracting_nif, contracting_name, item['observations'], item['closeDate'], item['causesDeadlineChange'], item['totalEffectivePrice'], item['causesPriceChange']])
