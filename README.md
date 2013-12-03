@@ -1,8 +1,9 @@
 This script is used to process data on Ajustes Diretos (non-bid contracts) from the Portuguese government and prepare it for import into Open Spending (http://openspending.org). This repository serves as an example for other Open Spending efforts.
 
+Final data on Open Spending: https://openspending.org/pt_ajustes-diretos  
 Source of the data: http://www.base.gov.pt
 
-### Usage:
+### Usage
 
 `python process-ajustes.py [file-name]`
 
