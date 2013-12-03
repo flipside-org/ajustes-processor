@@ -56,6 +56,11 @@ with open(file_out, "w") as file:
 			if item[price]:
 				item[price] = item[price].encode('utf-8').translate(None, '. €').replace(',', '.')
 
+		# Some signing dates are emtpy. Set empty ones to the publication date
+		# to prevent Openspending from rejecting the complete row.
+		if item['signingDate'] == None:
+			item['signingDate'] = item['publicationDate']
+		
 		# Convert dates to proper format (eg. 2013-10-23)
 		list_dates = ['publicationDate', 'signingDate', 'closeDate']
 
@@ -79,7 +84,7 @@ with open(file_out, "w") as file:
 
 		for longtext in list_longtexts:
 			if item[longtext]:
-				item[longtext] = item[longtext].encode('utf-8').replace("\r", "").replace("\n", "")
+				item[longtext] = item[longtext].encode('utf-8').replace("\r\n", " ").replace("\n\r", " ").replace("\r", " ").replace("\n", " ")
 
 		# Multiple locations are split with '<BR/>' substitute these for ' | '
 		item['executionPlace'] = item['executionPlace'].encode('utf-8').replace('<BR/>', ' | ')
