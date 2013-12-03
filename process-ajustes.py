@@ -79,7 +79,7 @@ with open(file_out, "w") as file:
 
 		for longtext in list_longtexts:
 			if item[longtext]:
-				item[longtext] = item[longtext].encode('utf-8').replace("\xa0", " ")
+				item[longtext] = item[longtext].encode('utf-8').replace("\r", "").replace("\n", "")
 
 		# Multiple locations are split with '<BR/>' substitute these for ' | '
 		item['executionPlace'] = item['executionPlace'].encode('utf-8').replace('<BR/>', ' | ')
