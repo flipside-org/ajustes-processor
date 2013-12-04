@@ -38,7 +38,7 @@ with open(file_out, "w") as file:
 	csv_file = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
 	# Write the header
-	csv_file.writerow(['signing_date', 'description', 'amount', 'execution_deadline', 'exection_place', 'publication_date', 'id', 'cpvs_id', 'cpvs_description', 'contract_types', 'object_description', 'contract_fundamentation', 'direct_award_fundamentation', 'contracted_id', 'contracted_nif', 'contracted_name', 'contracting_id', 'contracting_nif', 'contracting_name', 'observations', 'close_date', 'cause_deadline_change', 'total_price', 'cause_price_change'])
+	csv_file.writerow(['signing_date', 'description', 'amount', 'execution_deadline', 'execution_place', 'publication_date', 'id', 'cpvs_id', 'cpvs_description', 'contract_types', 'object_description', 'contracting_procedure_type', 'contract_fundamentation', 'direct_award_fundamentation', 'contracted_id', 'contracted_nif', 'contracted_name', 'contracting_id', 'contracting_nif', 'contracting_name', 'observations', 'close_date', 'cause_deadline_change', 'total_price', 'cause_price_change'])
 	
 	# Loop over each of the contracts
 	for line in fileinput.input(file_in):
@@ -46,6 +46,10 @@ with open(file_out, "w") as file:
 		try:
 			item = json.loads(line)
 		except ValueError as ex:
+			continue
+
+		# The dataset contains some contracts that are not Ajustes Diretos
+		if not item['contractingProcedureType'] == "Ajuste directo":
 			continue
 		
 		# Clean up the currency field: 1) remove thousand seperator; 2) remove
@@ -80,7 +84,7 @@ with open(file_out, "w") as file:
 			pass
 			
 		# Encode the texts
-		list_longtexts = ['description', 'executionDeadline', 'observations', 'contractTypes', 'objectBriefDescription', 'contractFundamentationType', 'directAwardFundamentationType', 'causesDeadlineChange', 'causesPriceChange']
+		list_longtexts = ['description', 'executionDeadline', 'observations', 'contractTypes', 'objectBriefDescription', 'contractingProcedureType', 'contractFundamentationType', 'directAwardFundamentationType', 'causesDeadlineChange', 'causesPriceChange']
 
 		for longtext in list_longtexts:
 			if item[longtext]:
@@ -128,6 +132,6 @@ with open(file_out, "w") as file:
 		contracting_name = ' | '.join(list_name)
 
 		# Write everything to the CSV file in the right order
-		csv_file.writerow([item['signingDate'], item['description'], item['initialContractualPrice'], item['executionDeadline'], item['executionPlace'], item['publicationDate'], item['id'], cpvs_id, cpvs_description, item['contractTypes'], item['objectBriefDescription'], item['contractFundamentationType'], item['directAwardFundamentationType'], contracted_id, contracted_nif, contracted_name, contracting_id, contracting_nif, contracting_name, item['observations'], item['closeDate'], item['causesDeadlineChange'], item['totalEffectivePrice'], item['causesPriceChange']])
+		csv_file.writerow([item['signingDate'], item['description'], item['initialContractualPrice'], item['executionDeadline'], item['executionPlace'], item['publicationDate'], item['id'], cpvs_id, cpvs_description, item['contractTypes'], item['objectBriefDescription'], item['contractingProcedureType'], item['contractFundamentationType'], item['directAwardFundamentationType'], contracted_id, contracted_nif, contracted_name, contracting_id, contracting_nif, contracting_name, item['observations'], item['closeDate'], item['causesDeadlineChange'], item['totalEffectivePrice'], item['causesPriceChange']])
 
 	print 'Data was written to ' + file_out + '.'
